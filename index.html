@@ -1,0 +1,2849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>咕咕服PVE工具</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-2: rgba(30, 41, 59, 0.82);
+      --line: rgba(148, 163, 184, 0.24);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --warn: #f59e0b;
+      --chip: rgba(56, 189, 248, 0.12);
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.22), transparent 28%),
+        radial-gradient(circle at 85% 18%, rgba(34, 197, 94, 0.16), transparent 30%),
+        linear-gradient(135deg, #020617 0%, #0f172a 48%, #111827 100%);
+      padding: 28px;
+    }
+
+    .app { max-width: 1360px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+    }
+
+    .title-wrap h1 {
+      margin: 0 0 8px;
+      font-size: clamp(30px, 4vw, 48px);
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .title-wrap p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 860px;
+      line-height: 1.7;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.55);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: #bae6fd;
+      font-size: 13px;
+      box-shadow: var(--shadow);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.58);
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.18);
+    }
+
+    .tab.active {
+      border-color: rgba(56, 189, 248, 0.72);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(34, 197, 94, 0.10));
+    }
+
+    .tab .name {
+      font-size: 18px;
+      font-weight: 850;
+      margin-bottom: 6px;
+    }
+
+    .tab .desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .main-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 8px 0 20px;
+    }
+
+    .main-tab {
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.58);
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.18);
+    }
+
+    .main-tab.active {
+      border-color: rgba(56, 189, 248, 0.72);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(34, 197, 94, 0.10));
+    }
+
+    .main-tab .name {
+      font-size: 18px;
+      font-weight: 850;
+      margin-bottom: 6px;
+    }
+
+    .main-tab .desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .module-section {
+      display: none;
+    }
+
+    .module-section.active {
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .control {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.85);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 15px 0 8px;
+    }
+
+    select, input {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.34);
+      border-radius: 14px;
+      background: rgba(2, 6, 23, 0.7);
+      color: var(--text);
+      padding: 13px 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: rgba(56, 189, 248, 0.85);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+    }
+
+    .quick-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .owned-help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      margin: -4px 0 10px;
+    }
+
+    .owned-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .owned-row {
+      display: grid;
+      grid-template-columns: 1fr 84px 38px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .owned-row select,
+    .owned-row input {
+      padding: 10px 10px;
+      font-size: 13px;
+      border-radius: 12px;
+    }
+
+    .owned-row button {
+      padding: 10px 0;
+      color: #fecdd3;
+      border-color: rgba(251, 113, 133, 0.28);
+    }
+
+    .owned-tools {
+      display: grid;
+      grid-template-columns: 1fr 86px;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .owned-empty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 10px 12px;
+      border: 1px dashed rgba(148, 163, 184, 0.28);
+      border-radius: 14px;
+      background: rgba(2, 6, 23, 0.24);
+    }
+
+    .deducted-note {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(34, 197, 94, 0.28);
+      background: rgba(34, 197, 94, 0.09);
+      color: #bbf7d0;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+
+    button {
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.75);
+      color: var(--text);
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(56, 189, 248, 0.7);
+      background: rgba(56, 189, 248, 0.14);
+    }
+
+    .summary {
+      margin-top: 18px;
+      padding: 15px;
+      border-radius: 16px;
+      background: rgba(2, 6, 23, 0.48);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .summary strong {
+      color: #f8fafc;
+      font-weight: 700;
+    }
+
+    .formula-list {
+      margin-top: 18px;
+      max-height: 44vh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .formula-item {
+      padding: 11px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.62);
+      border-radius: 14px;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .formula-item b {
+      color: #e0f2fe;
+      font-size: 13px;
+    }
+
+    .results {
+      padding: 22px;
+      min-height: 640px;
+    }
+
+    .top-result {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 15px;
+      background: rgba(2, 6, 23, 0.42);
+    }
+
+    .stat .num {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .stat .name {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .notice {
+      padding: 13px 15px;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.11);
+      color: #fde68a;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar input {
+      max-width: 360px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    details.scheme {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    details.scheme[open] {
+      border-color: rgba(56, 189, 248, 0.42);
+    }
+
+    .scheme summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 86px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid transparent;
+    }
+
+    details.scheme[open] summary {
+      border-bottom-color: var(--line);
+      background: rgba(2, 6, 23, 0.28);
+    }
+
+    .scheme summary::-webkit-details-marker { display: none; }
+
+    .scheme-no {
+      font-weight: 800;
+      color: #e0f2fe;
+    }
+
+    .route-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: var(--chip);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      color: #bae6fd;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .chip strong {
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .mini-materials {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .scheme-body {
+      padding: 14px 16px 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      vertical-align: top;
+    }
+
+    th {
+      color: #cbd5e1;
+      background: rgba(2, 6, 23, 0.38);
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    td.qty {
+      font-weight: 800;
+      color: #f8fafc;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .group-title {
+      margin: 18px 0 10px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #bbf7d0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .group-title::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-2);
+    }
+
+    .empty {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(148, 163, 184, 0.3);
+      border-radius: 20px;
+      line-height: 1.8;
+    }
+
+    .error {
+      padding: 15px;
+      border-radius: 16px;
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      background: rgba(251, 113, 133, 0.1);
+      color: #fecdd3;
+      line-height: 1.7;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      margin-top: 10px;
+    }
+
+    .ench-orange { color: #fb923c; font-weight: 750; }
+    .ench-yellow { color: #fde047; font-weight: 750; }
+    .ench-blue { color: #60a5fa; font-weight: 750; }
+    .ench-green { color: #4ade80; font-weight: 750; }
+    .ench-cyan { color: #22d3ee; font-weight: 750; }
+    .ench-red { color: #f87171; font-weight: 750; }
+    .tier-magenta { color: #e879f9; font-weight: 850; }
+    .tier-skyblue { color: #7dd3fc; font-weight: 850; }
+    .vanilla-text { color: #b6beca; }
+    .attr-blue { color: #60a5fa; font-weight: 720; }
+    .attr-red { color: #f87171; font-weight: 720; }
+
+    .equipment-layout {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .equipment-control {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .equipment-results {
+      padding: 22px;
+      min-height: 640px;
+    }
+
+    .equipment-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .equipment-card {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .equipment-card h3 {
+      margin: 0;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(2, 6, 23, 0.32);
+      font-size: 17px;
+    }
+
+    .equipment-card-body {
+      padding: 16px 18px 18px;
+    }
+
+    .equipment-recipe {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      background: rgba(56, 189, 248, 0.1);
+      color: #bae6fd;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .property-grid {
+      display: grid;
+      gap: 9px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .property-row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      padding-bottom: 8px;
+    }
+
+    .property-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .property-name {
+      color: var(--muted);
+    }
+
+    .property-value {
+      color: #f8fafc;
+    }
+
+    @media (max-width: 1060px) {
+      body { padding: 18px; }
+      header { display: block; }
+      .badge { display: inline-block; margin-top: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .equipment-layout { grid-template-columns: 1fr; }
+      .control, .equipment-control { position: static; }
+      .top-result { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+      .tabs { grid-template-columns: 1fr; }
+      .main-tabs { grid-template-columns: 1fr; }
+      .top-result { grid-template-columns: 1fr; }
+      .scheme summary {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      th:nth-child(3), td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title-wrap">
+        <h1>咕咕服PVE工具</h1>
+      </div>
+    </header>
+
+        <nav class="main-tabs" id="mainTabs">
+      <button class="main-tab active" type="button" data-main-module="material">
+        <div class="name">材料计算</div>
+        <div class="desc">按势力选择材料，计算所需基础材料。</div>
+      </button>
+      <button class="main-tab" type="button" data-main-module="equipment">
+        <div class="name">势力装备</div>
+        <div class="desc">查看各势力装备的合成材料与装备属性。</div>
+      </button>
+    </nav>
+
+    <section class="module-section active" id="materialModule">
+<main class="grid">
+      <aside class="panel control">
+        <h2 class="section-title" id="panelTitle">材料计算</h2>
+
+        <label for="faction">选择势力</label>
+        <select id="faction"></select>
+
+        <label for="target">选择该势力下要合成的材料</label>
+        <select id="target"></select>
+
+        <label for="amount">需要数量</label>
+        <input id="amount" type="number" min="0" step="1" value="1" />
+
+        <div class="quick-row">
+          <button type="button" data-quick="1">1</button>
+          <button type="button" data-quick="5">5</button>
+          <button type="button" data-quick="10">10</button>
+          <button type="button" data-quick="64">64</button>
+        </div>
+
+        <h2 class="section-title" style="margin-top:20px;">已有材料</h2>
+        <div class="owned-help">可添加你仓库里已有的高级材料或基础材料。计算时会先抵扣已有材料，再展开剩余需求。</div>
+        <div class="owned-list" id="ownedList"></div>
+        <div class="owned-tools">
+          <button type="button" id="addOwnedBtn">添加已有材料</button>
+          <button type="button" id="clearOwnedBtn">清空</button>
+        </div>
+
+        <div class="summary" id="summary"></div>
+
+        <div class="small" id="aliasNote"></div>
+      </aside>
+
+      <section class="panel results">
+        <div class="top-result" id="stats"></div>
+        <div id="output"></div>
+      </section>
+    </main>
+    </section>
+
+    <section class="module-section" id="equipmentModule">
+      <main class="equipment-layout">
+        <aside class="panel equipment-control">
+          <h2 class="section-title">势力装备</h2>
+
+          <label for="equipmentFaction">选择势力</label>
+          <select id="equipmentFaction"></select>
+
+          <label for="equipmentCategory">选择装备分类</label>
+          <select id="equipmentCategory"></select>
+
+          <label for="equipmentSet">选择套装</label>
+          <select id="equipmentSet"></select>
+
+          <div class="summary" id="equipmentSummary"></div>
+        </aside>
+
+        <section class="panel equipment-results">
+          <div id="equipmentOutput"></div>
+        </section>
+      </main>
+    </section>
+
+  </div>
+
+  <script>
+    const ALIASES = {
+      "坚韧的金属矿": "坚韧的合金矿",
+      "未知的金属矿": "未知的金属矿粒"
+    };
+
+    const SHARED_RECIPES = {
+      "泰拉能量棒": [
+        { label: "绿券兑换", items: [
+          ["绿券", 4]
+        ]}
+      ],
+      "未知的金属矿粒": [
+        { label: "合金碎片路线", items: [
+          ["合金碎片", 0.5],
+          ["粗铁", 6],
+          ["粗铜", 3]
+        ]},
+        { label: "烈焰粉矿石路线", items: [
+          ["烈焰粉矿石", 0.25],
+          ["火药", 3],
+          ["灵魂沙", 3]
+        ]}
+      ]
+    };
+
+    const TABLES = {
+      hunter: {
+        title: "猎兵",
+        desc: "DM能量结晶、D55环聚合金、C50纳米合金等材料计算。",
+        defaultTarget: "DM能量结晶",
+        note: "",
+        baseMaterials: [
+          "合金碎片", "粗铁", "粗铜", "烈焰粉矿石", "火药", "灵魂沙",
+          "日曜原石", "硫磺晶体", "良质岩块", "魔化精华", "粘液球", "绿券"
+        ],
+        recipes: {
+          "DM能量结晶": [
+            { label: "标准配方", items: [
+              ["C50纳米合金", 6],
+              ["地外提纯矿物", 4],
+              ["高级元素提纯液", 1]
+            ]}
+          ],
+          "D55环聚合金": [
+            { label: "标准配方", items: [
+              ["C50纳米合金", 6],
+              ["高级元素提纯液", 1],
+              ["泰拉能量棒", 60]
+            ]}
+          ],
+          "C50纳米合金": [
+            { label: "标准配方", items: [
+              ["聚合物凝酮块", 6],
+              ["高级元素提纯液", 1],
+              ["泰拉能量棒", 40]
+            ]}
+          ],
+          "高级元素提纯液": [
+            { label: "标准配方", items: [
+              ["合金提纯液", 3],
+              ["聚合剂熔物", 3],
+              ["泰拉能量棒", 20]
+            ]}
+          ],
+          "聚合剂熔物": [
+            { label: "标准配方", items: [
+              ["合金提纯液", 1],
+              ["粗铜", 60],
+              ["泰拉能量棒", 6]
+            ]}
+          ],
+          "聚合物凝酮块": [
+            { label: "标准配方", items: [
+              ["液态合金", 3],
+              ["合金提纯液", 1],
+              ["泰拉能量棒", 6]
+            ]}
+          ],
+          "合金提纯液": [
+            { label: "标准配方", items: [
+              ["坚韧的合金矿", 1],
+              ["粘液球", 40],
+              ["泰拉能量棒", 2]
+            ]}
+          ],
+          "液态合金": [
+            { label: "标准配方", items: [
+              ["坚韧的合金矿", 2],
+              ["粗铁", 20],
+              ["泰拉能量棒", 2]
+            ]}
+          ],
+          "坚韧的合金矿": [
+            { label: "标准配方", items: [
+              ["未知的金属矿粒", 10],
+              ["粗铜", 16],
+              ["泰拉能量棒", 1]
+            ]}
+          ],
+          "地外提纯矿物": [
+            { label: "日曜原石路线", items: [
+              ["日曜原石", 12],
+              ["未知的金属矿粒", 24]
+            ]},
+            { label: "硫磺晶体路线", items: [
+              ["硫磺晶体", 12],
+              ["未知的金属矿粒", 24]
+            ]},
+            { label: "良质岩块路线", items: [
+              ["良质岩块", 12],
+              ["未知的金属矿粒", 24]
+            ]},
+            { label: "魔化精华路线", items: [
+              ["魔化精华", 4],
+              ["未知的金属矿粒", 24]
+            ]}
+          ]
+        }
+      },
+      aslan: {
+        title: "阿斯兰",
+        desc: "地狱魔力石、熔炼魔力矿素、异界魂魄宝石锭等材料计算。",
+        defaultTarget: "地狱魔力石",
+        note: "说明：阿斯兰材料中的“泰拉能量棒”和“未知的金属矿粒”沿用猎兵材料合成表中的通用配方，因此结果中可能同时出现绿券、合金碎片、粗铁、粗铜、烈焰粉矿石、火药、灵魂沙等共享基础材料。",
+        baseMaterials: [
+          "优质生铁", "优质铜矿石", "粗金", "异界金属锭", "猪布林魂魄",
+          "魔化精华", "亡灵之息", "良质岩块", "硫磺晶体",
+          "合金碎片", "粗铁", "粗铜", "烈焰粉矿石", "火药", "灵魂沙", "绿券"
+        ],
+        primaryBaseMaterials: [
+          "优质生铁", "优质铜矿石", "粗金", "异界金属锭", "猪布林魂魄",
+          "魔化精华", "亡灵之息", "良质岩块", "硫磺晶体"
+        ],
+        sharedBaseMaterials: [
+          "合金碎片", "粗铁", "粗铜", "烈焰粉矿石", "火药", "灵魂沙", "绿券"
+        ],
+        recipes: {
+          "地狱魔力石": [
+            { label: "标准配方", items: [
+              ["熔炼魔力矿素", 3],
+              ["魔化精华", 18],
+              ["泰拉能量棒", 32]
+            ]}
+          ],
+          "熔炼魔力矿素": [
+            { label: "标准配方", items: [
+              ["熔炼地狱魔力锭", 3],
+              ["异界魂魄宝石锭", 3],
+              ["泰拉能量棒", 8]
+            ]}
+          ],
+          "异界魂魄宝石锭": [
+            { label: "标准配方", items: [
+              ["熔炼地狱魔力锭", 1],
+              ["异界魂魄宝石", 3],
+              ["泰拉能量棒", 6]
+            ]}
+          ],
+          "熔炼地狱魔力锭": [
+            { label: "标准配方", items: [
+              ["未知的金属矿粒", 20],
+              ["地狱魔力矿", 4],
+              ["泰拉能量棒", 6]
+            ]}
+          ],
+          "异界魂魄宝石": [
+            { label: "标准配方", items: [
+              ["异界金属锭", 2],
+              ["粗金", 24],
+              ["猪布林魂魄", 2]
+            ]}
+          ],
+          "地狱魔力矿": [
+            { label: "异界赤铁路线", items: [
+              ["异界赤铁", 3],
+              ["粗金", 12],
+              ["泰拉能量棒", 2]
+            ]},
+            { label: "良质岩块路线", items: [
+              ["良质岩块", 1],
+              ["亡灵之息", 2]
+            ]},
+            { label: "硫磺晶体路线", items: [
+              ["硫磺晶体", 1],
+              ["亡灵之息", 2]
+            ]}
+          ],
+          "异界赤铁": [
+            { label: "标准配方", items: [
+              ["优质生铁", 8],
+              ["优质铜矿石", 12],
+              ["合金碎片", 4]
+            ]}
+          ]
+        }
+      },
+      migaro: {
+        title: "米伽罗",
+        desc: "淬炼乌金锭、神谕符文石、教会嘉奖令等材料计算。",
+        defaultTarget: "淬炼乌金锭",
+        note: "说明：米伽罗材料计算器独立使用本版块的基础材料口径。多配方材料如“教会嘉奖令”会按不同路线合并展示。",
+        baseMaterials: [
+          "优质生铁", "古尔德煤炭", "优质铜矿石", "钻石", "米伽罗金币",
+          "高级神圣石", "城镇嘉奖令", "阿斯兰荣耀", "圣女草精华", "下界合金锭"
+        ],
+        recipes: {
+          "淬炼乌金锭": [
+            { label: "标准配方", items: [
+              ["淬炼秘银锁环", 4],
+              ["下界合金锭", 8],
+              ["琥珀魔石", 4]
+            ]}
+          ],
+          "神谕符文石": [
+            { label: "标准配方", items: [
+              ["紫晶魔石", 1],
+              ["高级神圣石", 6]
+            ]}
+          ],
+          "教会嘉奖令": [
+            { label: "城镇嘉奖令路线", items: [
+              ["城镇嘉奖令", 4],
+              ["神谕符文石", 1]
+            ]},
+            { label: "阿斯兰荣耀路线", items: [
+              ["阿斯兰荣耀", 12],
+              ["圣女草精华", 3]
+            ]}
+          ],
+          "淬炼秘银锭": [
+            { label: "标准配方", items: [
+              ["密炼秘银块", 3],
+              ["古尔德煤炭", 40],
+              ["琥珀魔石", 2]
+            ]}
+          ],
+          "淬炼秘银锁环": [
+            { label: "标准配方", items: [
+              ["密炼秘银块", 3],
+              ["古尔德煤炭", 40],
+              ["琥珀魔石", 2]
+            ]}
+          ],
+          "密炼秘银块": [
+            { label: "标准配方", items: [
+              ["精炼碳钢", 6],
+              ["古尔德煤炭", 40],
+              ["琥珀魔石", 1]
+            ]}
+          ],
+          "精炼碳钢": [
+            { label: "标准配方", items: [
+              ["淬炼生铁", 6],
+              ["古尔德煤炭", 18],
+              ["青灵宝石", 4]
+            ]}
+          ],
+          "淬炼生铁": [
+            { label: "标准配方", items: [
+              ["优质生铁", 6],
+              ["古尔德煤炭", 1.5],
+              ["优质铜矿石", 1]
+            ]}
+          ],
+          "紫晶魔石": [
+            { label: "标准配方", items: [
+              ["琥珀魔石", 10],
+              ["米伽罗金币", 60]
+            ]}
+          ],
+          "琥珀魔石": [
+            { label: "标准配方", items: [
+              ["青灵宝石", 10],
+              ["米伽罗金币", 30]
+            ]}
+          ],
+          "青灵宝石": [
+            { label: "标准配方", items: [
+              ["钻石", 10],
+              ["米伽罗金币", 10]
+            ]}
+          ]
+        }
+      },
+      daqin: {
+        title: "大秦",
+        desc: "神兵锻造许可、精炼玄铁、精炼铸铁、韧性铸铁、犀甲匹等材料计算。",
+        defaultTarget: "神兵锻造许可",
+        note: "说明：大秦材料计算独立使用本版块的基础材料口径。其中“灵气结核”出现在神兵锻造许可配方中，但未提供继续合成配方，因此本计算器先按基础材料显示，避免漏算。",
+        baseMaterials: [
+          "龙鳞币", "上等犀革", "古尔德煤炭", "优质生铁", "优质铜矿石",
+          "青铜锭", "龙鳞锭", "城镇嘉奖令", "灵气结核"
+        ],
+        recipes: {
+          "神兵锻造许可": [
+            { label: "标准配方", items: [
+              ["城镇嘉奖令", 4],
+              ["灵气结核", 2],
+              ["精炼玄铁", 30]
+            ]}
+          ],
+          "精炼玄铁": [
+            { label: "标准配方", items: [
+              ["精炼铸铁", 12],
+              ["古尔德煤炭", 10],
+              ["龙鳞锭", 5]
+            ]}
+          ],
+          "精炼铸铁": [
+            { label: "标准配方", items: [
+              ["韧性铸铁", 6],
+              ["古尔德煤炭", 10],
+              ["青铜锭", 1]
+            ]}
+          ],
+          "韧性铸铁": [
+            { label: "标准配方", items: [
+              ["优质生铁", 6],
+              ["古尔德煤炭", 9],
+              ["优质铜矿石", 2]
+            ]}
+          ],
+          "犀甲匹": [
+            { label: "标准配方", items: [
+              ["上等犀革", 6],
+              ["龙鳞币", 4]
+            ]}
+          ]
+        }
+      }
+    };
+
+    const factionEl = document.getElementById("faction");
+    const targetEl = document.getElementById("target");
+    const amountEl = document.getElementById("amount");
+    const outputEl = document.getElementById("output");
+    const statsEl = document.getElementById("stats");
+    const summaryEl = document.getElementById("summary");
+    const formulaListEl = document.getElementById("formulaList");
+    const ownedListEl = document.getElementById("ownedList");
+    const addOwnedBtn = document.getElementById("addOwnedBtn");
+    const clearOwnedBtn = document.getElementById("clearOwnedBtn");
+    const panelTitleEl = document.getElementById("panelTitle");
+    const aliasNoteEl = document.getElementById("aliasNote");
+
+    let activeTableKey = "hunter";
+    let activeData = null;
+    let activeRecipes = {};
+    let activeBaseMaterials = [];
+    let ownedRowsByTable = {};
+
+    const normalizeName = (name) => ALIASES[name] || name;
+
+    const fmt = (num) => {
+      const rounded = Math.round((num + Number.EPSILON) * 10000) / 10000;
+      return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+    };
+
+    const mergeMaterials = (a, b) => {
+      const out = { ...a };
+      Object.entries(b).forEach(([k, v]) => {
+        out[k] = (out[k] || 0) + v;
+      });
+      return out;
+    };
+
+    function getCurrentRecipes() {
+      return {
+        ...SHARED_RECIPES,
+        ...TABLES[activeTableKey].recipes
+      };
+    }
+
+    function getCurrentBaseMaterials() {
+      const fromTable = TABLES[activeTableKey].baseMaterials;
+      return Array.from(new Set(fromTable));
+    }
+
+
+    function getAllMaterialOptions() {
+      const names = [
+        ...Object.keys(activeData.recipes),
+        ...Object.keys(activeRecipes),
+        ...activeBaseMaterials
+      ].map(normalizeName);
+
+      return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+    }
+
+    function saveOwnedRows() {
+      if (!activeTableKey || !ownedListEl) return;
+
+      const rows = Array.from(ownedListEl.querySelectorAll(".owned-row")).map(row => {
+        const name = normalizeName(row.querySelector(".owned-material")?.value || "");
+        const qty = Number(row.querySelector(".owned-qty")?.value || 0);
+        return { name, qty };
+      }).filter(row => row.name && row.qty > 0);
+
+      ownedRowsByTable[activeTableKey] = rows;
+    }
+
+    function renderOwnedRows() {
+      const rows = ownedRowsByTable[activeTableKey] || [];
+      const options = getAllMaterialOptions();
+
+      if (!rows.length) {
+        ownedListEl.innerHTML = `<div class="owned-empty">暂无已有材料。点击“添加已有材料”后，可选择材料并填写数量。</div>`;
+        return;
+      }
+
+      ownedListEl.innerHTML = rows.map((row, index) => {
+        const optionHtml = options.map(name => {
+          const selected = name === row.name ? "selected" : "";
+          return `<option value="${name}" ${selected}>${name}</option>`;
+        }).join("");
+
+        return `
+          <div class="owned-row" data-index="${index}">
+            <select class="owned-material">${optionHtml}</select>
+            <input class="owned-qty" type="number" min="0" step="1" value="${fmt(row.qty)}" />
+            <button type="button" class="owned-remove" title="删除">×</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function addOwnedRow() {
+      saveOwnedRows();
+      const options = getAllMaterialOptions();
+      const rows = ownedRowsByTable[activeTableKey] || [];
+      rows.push({ name: options[0] || "", qty: 1 });
+      ownedRowsByTable[activeTableKey] = rows;
+      renderOwnedRows();
+      renderOutput();
+    }
+
+    function clearOwnedRows() {
+      ownedRowsByTable[activeTableKey] = [];
+      renderOwnedRows();
+      renderOutput();
+    }
+
+    function getOwnedMaterials() {
+      saveOwnedRows();
+
+      const owned = {};
+      (ownedRowsByTable[activeTableKey] || []).forEach(row => {
+        const name = normalizeName(row.name);
+        const qty = Number(row.qty || 0);
+        if (name && qty > 0) {
+          owned[name] = (owned[name] || 0) + qty;
+        }
+      });
+
+      return owned;
+    }
+
+    function cloneMaterials(materials) {
+      return { ...materials };
+    }
+
+    function isBase(name) {
+      return activeBaseMaterials.includes(normalizeName(name));
+    }
+
+    const materialKey = (materials) => {
+      return activeBaseMaterials
+        .map(name => `${name}:${fmt(materials[name] || 0)}`)
+        .join("|");
+    };
+
+    const routeKey = (routes) => {
+      return Object.keys(routes).sort().map(k => `${k}:${routes[k]}`).join("|");
+    };
+
+    function findReachableMultiMaterials(rawName, visited = new Set()) {
+      const name = normalizeName(rawName);
+
+      if (isBase(name) || !activeRecipes[name] || visited.has(name)) {
+        return new Set();
+      }
+
+      visited.add(name);
+
+      const found = new Set();
+      if (activeRecipes[name].length > 1) {
+        found.add(name);
+      }
+
+      activeRecipes[name].forEach(recipe => {
+        recipe.items.forEach(([child]) => {
+          findReachableMultiMaterials(child, visited).forEach(item => found.add(item));
+        });
+      });
+
+      return found;
+    }
+
+    function cartesianChoice(materialNames, index = 0, current = {}, out = []) {
+      if (index >= materialNames.length) {
+        out.push({ ...current });
+        return out;
+      }
+
+      const name = materialNames[index];
+      activeRecipes[name].forEach((_, recipeIndex) => {
+        current[name] = recipeIndex;
+        cartesianChoice(materialNames, index + 1, current, out);
+      });
+
+      delete current[name];
+      return out;
+    }
+
+    function mergeDeducted(a, b) {
+      const out = { ...a };
+      Object.entries(b).forEach(([k, v]) => {
+        out[k] = (out[k] || 0) + v;
+      });
+      return out;
+    }
+
+    function consumeOwned(name, qty, owned) {
+      const available = owned[name] || 0;
+      const used = Math.min(qty, available);
+
+      if (used > 0) {
+        owned[name] = available - used;
+        if (owned[name] <= 0.0000001) delete owned[name];
+      }
+
+      return {
+        remaining: qty - used,
+        deducted: used > 0 ? { [name]: used } : {}
+      };
+    }
+
+    function expandWithGlobalChoices(rawName, qty, choices, stack = [], owned = {}) {
+      const name = normalizeName(rawName);
+
+      if (qty === 0) {
+        return { materials: {}, routes: {}, deducted: {} };
+      }
+
+      const consumed = consumeOwned(name, qty, owned);
+      const remainingQty = consumed.remaining;
+
+      if (remainingQty <= 0.0000001) {
+        return { materials: {}, routes: {}, deducted: consumed.deducted };
+      }
+
+      if (isBase(name) || !activeRecipes[name]) {
+        return {
+          materials: { [name]: remainingQty },
+          routes: {},
+          deducted: consumed.deducted
+        };
+      }
+
+      if (stack.includes(name)) {
+        throw new Error(`检测到循环配方：${stack.concat(name).join(" → ")}`);
+      }
+
+      const recipes = activeRecipes[name];
+      const recipeIndex = recipes.length > 1 ? (choices[name] ?? 0) : 0;
+      const recipe = recipes[recipeIndex];
+
+      let materials = {};
+      let routes = {};
+      let deducted = { ...consumed.deducted };
+
+      if (recipes.length > 1) {
+        routes[name] = recipe.label;
+      }
+
+      recipe.items.forEach(([ingredientName, ingredientQty]) => {
+        const sub = expandWithGlobalChoices(ingredientName, ingredientQty * remainingQty, choices, stack.concat(name), owned);
+        materials = mergeMaterials(materials, sub.materials);
+        routes = { ...routes, ...sub.routes };
+        deducted = mergeDeducted(deducted, sub.deducted);
+      });
+
+      return { materials, routes, deducted };
+    }
+
+    function computeMergedResults(target, amount, ownedMaterials = {}) {
+      const multiMaterials = Array.from(findReachableMultiMaterials(target));
+      const choicesList = multiMaterials.length ? cartesianChoice(multiMaterials) : [{}];
+
+      const map = new Map();
+
+      choicesList.forEach(choices => {
+        const ownedCopy = cloneMaterials(ownedMaterials);
+        const expanded = expandWithGlobalChoices(target, amount, choices, [], ownedCopy);
+        const key = materialKey(expanded.materials) + "##" + routeKey(expanded.routes);
+
+        if (!map.has(key)) {
+          map.set(key, {
+            materials: expanded.materials,
+            routes: expanded.routes,
+            deducted: expanded.deducted
+          });
+        }
+      });
+
+      return Array.from(map.values()).sort((a, b) => {
+        const aRoute = routeKey(a.routes);
+        const bRoute = routeKey(b.routes);
+        return aRoute.localeCompare(bRoute, "zh-Hans-CN");
+      });
+    }
+
+    function routeLabel(routes) {
+      const names = Object.keys(routes);
+      if (!names.length) return "标准单路线";
+      return names.map(name => `${name}：${routes[name]}`).join("；");
+    }
+
+    function miniMaterials(materials) {
+      const active = activeBaseMaterials
+        .filter(name => (materials[name] || 0) > 0)
+        .map(name => `${name}${fmt(materials[name])}`);
+      if (!active.length) return "无需新增基础材料";
+      return active.slice(0, 5).join(" / ") + (active.length > 5 ? ` / 等${active.length}种` : "");
+    }
+
+    function primaryGroupKey(result) {
+      const priority = ["教会嘉奖令", "地狱魔力矿", "地外提纯矿物", "未知的金属矿粒"];
+      for (const name of priority) {
+        if (result.routes[name]) return `${name}：${result.routes[name]}`;
+      }
+      if (Object.keys(result.routes).length) {
+        return routeLabel(result.routes);
+      }
+      return "标准单路线";
+    }
+
+    function renderFactionOptions() {
+      factionEl.innerHTML = Object.entries(TABLES).map(([key, data]) => {
+        const selected = key === activeTableKey ? "selected" : "";
+        return `<option value="${key}" ${selected}>${data.title}</option>`;
+      }).join("");
+    }
+
+    function renderTargetOptions() {
+      targetEl.innerHTML = "";
+      Object.keys(activeData.recipes).forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        targetEl.appendChild(option);
+      });
+      targetEl.value = activeData.defaultTarget;
+    }
+
+    function renderFormulas() {
+      if (!formulaListEl) return;
+      const ownRecipes = activeData.recipes;
+      const sharedUsed = Object.keys(SHARED_RECIPES).filter(name => {
+        return JSON.stringify(ownRecipes).includes(name);
+      });
+
+      const formulaBlocks = [];
+
+      Object.keys(ownRecipes).forEach(name => {
+        formulaBlocks.push(renderOneFormula(name, ownRecipes[name]));
+      });
+
+      sharedUsed.forEach(name => {
+        formulaBlocks.push(renderOneFormula(name, SHARED_RECIPES[name], "通用配方"));
+      });
+
+      formulaListEl.innerHTML = formulaBlocks.join("");
+    }
+
+    function renderOneFormula(name, recipes, tag = "") {
+      const recipesHtml = recipes.map(recipe => {
+        const rhs = recipe.items.map(([n, q]) => `${fmt(q)}个${normalizeName(n)}`).join(" + ");
+        return `<div>${recipes.length > 1 ? `<b>${recipe.label}</b>：` : ""}1个${name} = ${rhs}</div>`;
+      }).join("");
+      return `<div class="formula-item"><b>${name}</b>${tag ? ` <span style="color:#94a3b8">· ${tag}</span>` : ""}${recipesHtml}</div>`;
+    }
+
+    function renderStats(results, amount, target) {
+      let maxTotalKinds = 0;
+
+      results.forEach(result => {
+        maxTotalKinds = Math.max(maxTotalKinds, Object.values(result.materials).filter(v => v > 0).length);
+      });
+
+      statsEl.innerHTML = [
+        ["目标数量", `${fmt(amount)} 个`, target],
+        ["合并方案", `${results.length} 种`, "同一多配方材料全局合并"],
+        ["材料种类", `${maxTotalKinds} 种`, "按最多方案统计"]
+      ].map(([name, num, sub]) => `
+        <div class="stat">
+          <div class="num">${num}</div>
+          <div class="name">${name} · ${sub}</div>
+        </div>
+      `).join("");
+    }
+
+    function materialRows(materials) {
+      const rows = activeBaseMaterials
+        .filter(name => (materials[name] || 0) > 0)
+        .map(name => {
+          let type = "基础材料";
+          if (activeData.primaryBaseMaterials && activeData.primaryBaseMaterials.includes(name)) {
+            type = "阿斯兰基础材料";
+          }
+          if (activeData.sharedBaseMaterials && activeData.sharedBaseMaterials.includes(name)) {
+            type = "通用配方基础材料";
+          }
+          if (name === "绿券") type = "由泰拉能量棒换算";
+          return `
+            <tr>
+              <td>${name}</td>
+              <td class="qty">${fmt(materials[name])}</td>
+              <td>${type}</td>
+            </tr>
+          `;
+        }).join("");
+
+      return rows || `<tr><td colspan="3">已有材料已完全覆盖，本方案无需新增基础材料。</td></tr>`;
+    }
+
+    function deductedSummary(deducted) {
+      const entries = Object.entries(deducted || {}).filter(([, qty]) => qty > 0);
+      if (!entries.length) return "";
+      return entries.map(([name, qty]) => `${name}${fmt(qty)}`).join(" / ");
+    }
+
+    function deductedBlock(deducted) {
+      const summary = deductedSummary(deducted);
+      if (!summary) return "";
+      return `<div class="deducted-note">已抵扣已有材料：${summary}</div>`;
+    }
+
+    function schemeItem(result, index) {
+      const routeChips = Object.keys(result.routes).length
+        ? Object.entries(result.routes).map(([name, route]) => `<span class="chip"><strong>${name}</strong>${route}</span>`).join("")
+        : `<span class="chip"><strong>路线</strong>标准单路线</span>`;
+
+      return `
+        <details class="scheme" data-search="${routeLabel(result.routes)} ${miniMaterials(result.materials)} ${deductedSummary(result.deducted)}">
+          <summary>
+            <div class="scheme-no">方案 ${index}</div>
+            <div class="route-line">${routeChips}</div>
+            <div class="mini-materials">${miniMaterials(result.materials)}</div>
+          </summary>
+          <div class="scheme-body">
+            ${deductedBlock(result.deducted)}
+            <table>
+              <thead>
+                <tr>
+                  <th>基础材料</th>
+                  <th>需要数量</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>${materialRows(result.materials)}</tbody>
+            </table>
+          </div>
+        </details>
+      `;
+    }
+
+    function renderList(results) {
+      const grouped = new Map();
+
+      results.forEach(result => {
+        const key = primaryGroupKey(result);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(result);
+      });
+
+      let index = 1;
+      let html = "";
+
+      grouped.forEach((groupResults, groupName) => {
+        html += `<div class="group-title">${groupName}</div>`;
+        html += `<div class="list">`;
+        groupResults.forEach(result => {
+          html += schemeItem(result, index++);
+        });
+        html += `</div>`;
+      });
+
+      return html;
+    }
+
+    function bindSearch() {
+      const searchEl = document.getElementById("schemeSearch");
+      if (!searchEl) return;
+
+      searchEl.addEventListener("input", () => {
+        const keyword = searchEl.value.trim().toLowerCase();
+        document.querySelectorAll("details.scheme").forEach(item => {
+          const haystack = item.dataset.search.toLowerCase();
+          item.style.display = !keyword || haystack.includes(keyword) ? "" : "none";
+        });
+      });
+    }
+
+    function bindAccordion() {
+      document.querySelectorAll("details.scheme").forEach(item => {
+        item.addEventListener("toggle", () => {
+          if (!item.open) return;
+
+          document.querySelectorAll("details.scheme").forEach(other => {
+            if (other !== item) {
+              other.open = false;
+            }
+          });
+        });
+      });
+    }
+
+    function renderOutput() {
+      const target = targetEl.value;
+      const amount = Number(amountEl.value);
+
+      if (!target || Number.isNaN(amount) || amount <= 0) {
+        statsEl.innerHTML = "";
+        outputEl.innerHTML = `<div class="empty">请输入大于 0 的目标数量。</div>`;
+        summaryEl.innerHTML = "等待输入目标材料数量。";
+        return;
+      }
+
+      try {
+        const ownedMaterials = getOwnedMaterials();
+        const results = computeMergedResults(target, amount, ownedMaterials);
+        renderStats(results, amount, target);
+
+        const reachableMulti = Array.from(findReachableMultiMaterials(target));
+        const ownedEntries = Object.entries(ownedMaterials).filter(([, qty]) => qty > 0);
+        const ownedText = ownedEntries.length
+          ? ownedEntries.map(([name, qty]) => `${name}${fmt(qty)}`).join("、")
+          : "无";
+
+        summaryEl.innerHTML = `
+          当前势力：<strong>${activeData.title}</strong><br>
+          当前计算：<strong>${fmt(amount)} 个 ${target}</strong><br>
+          合并规则：同一种多配方材料在一个方案中只选择一种路线。<br>
+          已有材料：${ownedText}<br>
+          本次涉及多配方材料：${reachableMulti.length ? reachableMulti.join("、") : "无"}
+        `;
+
+        const notice = `
+          <div class="notice">
+            已将可合并的方案压缩成列表，并会先抵扣你填写的已有材料。点击每个方案可展开查看基础材料明细；
+            搜索框可按路线、材料名或已抵扣材料快速筛选。
+          </div>
+          <div class="toolbar">
+            <div class="mini-materials">共 ${results.length} 个合并方案</div>
+            <input id="schemeSearch" type="search" placeholder="搜索路线或材料，例如：硫磺晶体、钻石、龙鳞锭、城镇嘉奖令" />
+          </div>
+        `;
+
+        outputEl.innerHTML = notice + renderList(results);
+        bindSearch();
+        bindAccordion();
+      } catch (err) {
+        statsEl.innerHTML = "";
+        outputEl.innerHTML = `<div class="error">${err.message}</div>`;
+        summaryEl.innerHTML = "计算失败，请检查配方是否存在循环。";
+      }
+    }
+
+    function setupActiveTable() {
+      activeData = TABLES[activeTableKey];
+      activeRecipes = getCurrentRecipes();
+      activeBaseMaterials = getCurrentBaseMaterials();
+
+      panelTitleEl.textContent = "材料计算";
+      aliasNoteEl.textContent = activeData.note;
+      aliasNoteEl.style.display = activeData.note ? "" : "none";
+
+      renderFactionOptions();
+      renderTargetOptions();
+      renderOwnedRows();
+      renderFormulas();
+      renderOutput();
+    }
+
+    document.querySelectorAll("[data-quick]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        amountEl.value = btn.dataset.quick;
+        renderOutput();
+      });
+    });
+
+    factionEl.addEventListener("change", () => {
+      saveOwnedRows();
+      activeTableKey = factionEl.value;
+      setupActiveTable();
+    });
+
+    targetEl.addEventListener("change", renderOutput);
+    amountEl.addEventListener("input", renderOutput);
+
+    ownedListEl.addEventListener("input", () => {
+      saveOwnedRows();
+      renderOutput();
+    });
+
+    ownedListEl.addEventListener("change", () => {
+      saveOwnedRows();
+      renderOutput();
+    });
+
+    ownedListEl.addEventListener("click", event => {
+      if (!event.target.classList.contains("owned-remove")) return;
+      saveOwnedRows();
+      const row = event.target.closest(".owned-row");
+      const index = Number(row?.dataset.index);
+      const rows = ownedRowsByTable[activeTableKey] || [];
+      rows.splice(index, 1);
+      ownedRowsByTable[activeTableKey] = rows;
+      renderOwnedRows();
+      renderOutput();
+    });
+
+    addOwnedBtn.addEventListener("click", addOwnedRow);
+    clearOwnedBtn.addEventListener("click", clearOwnedRows);
+
+
+    const EQUIPMENT_DATA = {
+      hunter: {
+        title: "猎兵",
+        categories: {
+          armor: {
+            title: "装甲",
+            sets: {
+              hunterArmorTier1: {
+                title: "复合物质内衬套装(猎兵一级甲)",
+                items: [
+                  {
+                    name: "复合物质内衬帽",
+                    recipe: [["聚合物凝酮块", 3], ["合金提纯液", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护IV、耐久X",
+                    pluginEnchant: "无",
+                    equipmentAttr: "+2盔甲韧性、+2护甲值、+1最大生命值、+1击退抗性",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "复合物质内衬服",
+                    recipe: [["聚合物凝酮块", 3], ["合金提纯液", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护IV、耐久X",
+                    pluginEnchant: "无",
+                    equipmentAttr: "+2盔甲韧性、+5护甲值、+1最大生命值、+1击退抗性",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "复合物质内衬裤",
+                    recipe: [["聚合物凝酮块", 3], ["合金提纯液", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护IV、耐久X",
+                    pluginEnchant: "无",
+                    equipmentAttr: "+2盔甲韧性、+3护甲值、+1最大生命值、+1击退抗性",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "复合物质内衬鞋",
+                    recipe: [["聚合物凝酮块", 3], ["合金提纯液", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护IV、耐久X",
+                    pluginEnchant: "无",
+                    equipmentAttr: "+2盔甲韧性、+2护甲值、+1最大生命值、+1击退抗性",
+                    setAttr: "无"
+                  }
+                ]
+              },
+              hunterArmorTier2: {
+                title: "泰拉猎兵套装(二级甲)",
+                items: [
+                  {
+                    name: "泰拉猎兵头盔",
+                    recipe: [["复合物质内衬帽", 1, true], ["D55环聚合金", 2], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "无畏", level: 4, color: "orange" },
+                      { name: "久立", level: 4, color: "yellow" },
+                      { name: "厚重", level: 4, color: "yellow" },
+                      { name: "烟雾弹", level: 5, color: "blue" },
+                      { name: "醍醐灌顶", level: 5, color: "blue" },
+                      { name: "食物储备", level: 3, color: "blue" }
+                    ],
+                    equipmentAttr: "+8护甲值、+5盔甲韧性、+2击退抗性、+2最大生命值、+1%攻击伤害",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉猎兵盔甲",
+                    recipe: [["复合物质内衬服", 1, true], ["D55环聚合金", 2], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 4, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 4, color: "yellow" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "偏折", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+8护甲值、+5盔甲韧性、+2击退抗性、+2最大生命值、+1%攻击伤害",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉猎兵护腿",
+                    recipe: [["复合物质内衬裤", 1, true], ["D55环聚合金", 2], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 4, color: "yellow" },
+                      { name: "重甲", level: 4, color: "yellow" },
+                      { name: "厚重", level: 4, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 3, color: "blue" },
+                      { name: "侥幸", level: 3, color: "blue" }
+                    ],
+                    equipmentAttr: "+7护甲值、+5盔甲韧性、+2击退抗性、+2最大生命值、+1%攻击伤害",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉猎兵长靴",
+                    recipe: [["复合物质内衬鞋", 1, true], ["D55环聚合金", 2], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "死里逃生", level: 5, color: "orange" },
+                      { name: "闪避", level: 4, color: "yellow" },
+                      { name: "久立", level: 4, color: "yellow" },
+                      { name: "厚重", level: 4, color: "yellow" },
+                      { name: "下落震荡", level: 3, color: "blue" },
+                      { name: "下落攻击", level: 3, color: "blue" }
+                    ],
+                    equipmentAttr: "+5护甲值、+5盔甲韧性、+2击退抗性、+2最大生命值、+1%攻击伤害",
+                    setAttr: "无"
+                  }
+                ]
+              },
+              hunterArmorTier3: {
+                title: "赋灵泰拉猎兵套装(三级甲)",
+                items: [
+                  {
+                    name: "赋灵泰拉猎兵头盔",
+                    recipe: [["泰拉猎兵头盔", 1, true], ["D55环聚合金", 1], ["DM能量结晶", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "无畏", level: 4, color: "orange" },
+                      { name: "久立", level: 4, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "醍醐灌顶", level: 5, color: "blue" },
+                      { name: "烟雾弹", level: 5, color: "blue" },
+                      { name: "食物储备", level: 3, color: "blue" }
+                    ],
+                    equipmentAttr: "+4护甲值、+3盔甲韧性、+2击退抗性、+2%攻击伤害",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "大师级",
+                    tierColor: "magenta"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵胸甲",
+                    recipe: [["泰拉猎兵盔甲", 1, true], ["D55环聚合金", 1], ["DM能量结晶", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 5, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 5, color: "yellow" },
+                      { name: "偏折", level: 5, color: "blue" },
+                      { name: "反弹", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+8护甲值、+3盔甲韧性、+2击退抗性、+2%攻击伤害",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "大师级",
+                    tierColor: "magenta"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵护腿",
+                    recipe: [["泰拉猎兵护腿", 1, true], ["D55环聚合金", 1], ["DM能量结晶", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 5, color: "yellow" },
+                      { name: "重甲", level: 5, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "侥幸", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+7护甲值、+3盔甲韧性、+2击退抗性、+2%速度",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "大师级",
+                    tierColor: "magenta"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵长靴",
+                    recipe: [["泰拉猎兵长靴", 1, true], ["D55环聚合金", 1], ["DM能量结晶", 1], ["绿券", 40]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "死里逃生", level: 5, color: "orange" },
+                      { name: "闪避", level: 4, color: "yellow" },
+                      { name: "久立", level: 4, color: "yellow" },
+                      { name: "厚重", level: 4, color: "yellow" },
+                      { name: "下落震荡", level: 3, color: "blue" },
+                      { name: "下落攻击", level: 3, color: "blue" }
+                    ],
+                    equipmentAttr: "+4护甲值、+3盔甲韧性、+2击退抗性、+2%速度",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "大师级",
+                    tierColor: "magenta"
+                  }
+                ]
+              },
+              hunterArmorSpecializationChest: {
+                title: "赋灵专精-胸甲",
+                items: [
+                  {
+                    name: "赋灵泰拉猎兵胸甲专精生存力α",
+                    recipe: [["赋灵泰拉猎兵胸甲", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 5, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 5, color: "yellow" },
+                      { name: "偏折", level: 5, color: "blue" },
+                      { name: "反弹", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+11护甲值、+4盔甲韧性、+2击退抗性、+4%攻击伤害、+10最大生命值",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵胸甲专精生存力β",
+                    recipe: [["赋灵泰拉猎兵胸甲专精生存力α", 1, true], ["DM能量结晶", 3], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 5, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 5, color: "yellow" },
+                      { name: "偏折", level: 5, color: "blue" },
+                      { name: "反弹", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+12护甲值、+4盔甲韧性、+4击退抗性、+4%攻击速度、+4%攻击伤害、+20最大生命值",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵胸甲专精战斗力α",
+                    recipe: [["赋灵泰拉猎兵胸甲", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 5, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 5, color: "yellow" },
+                      { name: "偏折", level: 5, color: "blue" },
+                      { name: "反弹", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+11护甲值、+5%攻击速度、+5击退抗性、+5盔甲韧性、+30%横扫伤害比率、+10%攻击伤害",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵胸甲专精战斗力β",
+                    recipe: [["赋灵泰拉猎兵胸甲专精战斗力α", 1, true], ["DM能量结晶", 3], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "斗转星移", level: 5, color: "orange" },
+                      { name: "不屈", level: 1, color: "yellow" },
+                      { name: "剑舞", level: 8, color: "yellow" },
+                      { name: "皮糙肉厚", level: 5, color: "yellow" },
+                      { name: "偏折", level: 5, color: "blue" },
+                      { name: "反弹", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+12护甲值、+6%攻击速度、+6击退抗性、+6盔甲韧性、+6最大生命值、+30%横扫伤害比率、+15%攻击伤害",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  }
+                ]
+              },
+              hunterArmorSpecializationLeggings: {
+                title: "赋灵专精-护腿",
+                items: [
+                  {
+                    name: "赋灵泰拉猎兵护腿专精生存力α",
+                    recipe: [["赋灵泰拉猎兵护腿", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 5, color: "yellow" },
+                      { name: "重甲", level: 5, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "侥幸", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+9护甲值、+4盔甲韧性、+10最大生命值、+4%速度、+4最大伤害吸收值",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵护腿专精生存力β",
+                    recipe: [["赋灵泰拉猎兵护腿专精生存力α", 1, true], ["DM能量结晶", 3], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 5, color: "yellow" },
+                      { name: "重甲", level: 5, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "侥幸", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+10护甲值、+5盔甲韧性、+20最大生命值、+4%速度、+8最大伤害吸收值、-100%着火时间",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵护腿专精战斗力α",
+                    recipe: [["赋灵泰拉猎兵护腿", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 5, color: "yellow" },
+                      { name: "重甲", level: 5, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "侥幸", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+8护甲值、+8%攻击伤害、+4击退抗性、+4%速度、+4幸运值",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  },
+                  {
+                    name: "赋灵泰拉猎兵护腿专精战斗力β",
+                    recipe: [["赋灵泰拉猎兵护腿专精战斗力α", 1, true], ["DM能量结晶", 3], ["绿券", 60]],
+                    vanillaEnchant: "保护V、耐久X",
+                    pluginEnchant: [
+                      { name: "肉盾", level: 5, color: "yellow" },
+                      { name: "重甲", level: 5, color: "yellow" },
+                      { name: "厚重", level: 5, color: "yellow" },
+                      { name: "迟缓诅咒", level: 3, color: "blue" },
+                      { name: "反弹", level: 4, color: "blue" },
+                      { name: "侥幸", level: 4, color: "blue" }
+                    ],
+                    equipmentAttr: "+12护甲值、+12%攻击伤害、+6击退抗性、+6幸运值、+4%速度、+8最大生命值",
+                    setAttr: "获得20点血量、获得额外10点护甲、获得额外10点护甲韧性、收到的全部伤害减少40%、获得1.5倍远程伤害加成、获得1.3倍暴击伤害加成",
+                    tier: "宗师级",
+                    tierColor: "skyblue"
+                  }
+                ]
+              }
+            }
+          },
+          weapon: {
+            title: "武器",
+            sets: {
+              hunterWeaponTerraSword: {
+                title: "泰拉利剑",
+                items: [
+                  {
+                    name: "泰拉利剑",
+                    recipe: [["C50纳米合金", 3], ["绿券", 60], ["合金提纯液", 4]],
+                    vanillaEnchant: "锋利VIII、横扫之刃VI、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 2, color: "orange" },
+                      { name: "虚弱附加", level: 4, color: "yellow" },
+                      { name: "格挡反击", level: 2, color: "yellow" },
+                      { name: "暴伤", level: 3, color: "blue" },
+                      { name: "羽化", level: 2, color: "green" }
+                    ],
+                    equipmentAttr: "+14.5攻击伤害、+2护甲值、+2盔甲韧性、-2.4攻击速度、+0.86横扫伤害比率",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉利剑D1",
+                    recipe: [["泰拉利剑", 1, true], ["C50纳米合金", 6], ["绿券", 60]],
+                    vanillaEnchant: "锋利VIII、横扫之刃VI、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 3, color: "orange" },
+                      { name: "虚弱附加", level: 5, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "暴伤", level: 4, color: "blue" },
+                      { name: "羽化", level: 3, color: "green" }
+                    ],
+                    equipmentAttr: "+16.5攻击伤害、+3护甲值、+3盔甲韧性、+3击退抗性、-2.4攻击速度、+0.86横扫伤害比率",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉利剑D2",
+                    recipe: [["泰拉利剑D1", 1, true], ["C50纳米合金", 12], ["绿券", 60]],
+                    vanillaEnchant: "锋利VIII、横扫之刃VI、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 4, color: "orange" },
+                      { name: "虚弱附加", level: 7, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "暴伤", level: 5, color: "blue" },
+                      { name: "羽化", level: 3, color: "green" }
+                    ],
+                    equipmentAttr: "+18.5攻击伤害、+3护甲值、+3盔甲韧性、+3击退抗性、-2.4攻击速度、+0.86横扫伤害比率",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉利剑X",
+                    recipe: [["泰拉利剑D2", 1, true], ["C50纳米合金", 18], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、横扫之刃VII、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "暴伤", level: 5, color: "blue" },
+                      { name: "羽化", level: 3, color: "green" }
+                    ],
+                    equipmentAttr: "+20.5攻击伤害、+3护甲值、+3盔甲韧性、+3击退抗性、-2.3攻击速度、+0.88横扫伤害比率、副手：+10%速度",
+                    setAttr: "无"
+                  }
+                ]
+              },
+              hunterWeaponPowerBlade: {
+                title: "动力刃",
+                items: [
+                  {
+                    name: "泰拉动力甲战刃",
+                    recipe: [["泰拉利剑X", 1, true], ["D55环聚合金", 4], ["DM能量结晶", 1]],
+                    vanillaEnchant: "锋利X、破甲III、横扫之刃X、耐久X",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "杀生", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+28攻击伤害、+4最大生命值、+4最大伤害吸收值、+1实体交互距离、-3.2攻击速度、+0.1重力、+0.91横扫伤害比率",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉动力甲战刃适应性α",
+                    recipe: [["泰拉动力甲战刃", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、破甲III、横扫之刃X、耐久X",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "杀生", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+34攻击伤害、+8最大生命值、+8最大伤害吸收值、+8击退抗性、+1.2实体交互距离、-3攻击速度、+0.05重力、+0.91横扫伤害比率",
+                    setAttr: "无"
+                  },
+                  {
+                    name: "泰拉动力甲战刃适应性β",
+                    recipe: [["泰拉动力甲战刃适应性α", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、破甲III、横扫之刃X、耐久X",
+                    pluginEnchant: [
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "杀生", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+36攻击伤害、+12最大生命值、+8最大伤害吸收值、+8击退抗性、+1.2实体交互距离、-3攻击速度、+0.04重力、+0.91横扫伤害比率",
+                    setAttr: "无"
+                  }
+                ]
+              },
+              hunterWeaponBattleKnife: {
+                title: "猎兵战刀",
+                items: [
+                  {
+                    name: "猎兵战刀",
+                    recipe: [["C50纳米合金", 3], ["绿券", 60], ["合金提纯液", 3]],
+                    vanillaEnchant: "锋利VI、耐久VI、经验修补",
+                    pluginEnchant: [
+                      { name: "中断", level: 1, color: "cyan" },
+                      { name: "杀生", level: 3, color: "green" }
+                    ],
+                    equipmentAttr: "+14攻击伤害、+1护甲值、+1盔甲韧性、-2.4攻击速度"
+                  },
+                  {
+                    name: "猎兵战刀C1",
+                    recipe: [["猎兵战刀", 1, true], ["C50纳米合金", 6], ["绿券", 60]],
+                    vanillaEnchant: "锋利VI、耐久VI、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 2, color: "orange" },
+                      { name: "虚弱附加", level: 4, color: "yellow" },
+                      { name: "格挡反击", level: 1, color: "yellow" },
+                      { name: "中断", level: 2, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+15攻击伤害、+1护甲值、+1盔甲韧性、-2.4攻击速度"
+                  },
+                  {
+                    name: "猎兵战刀C2",
+                    recipe: [["猎兵战刀C1", 1, true], ["C50纳米合金", 9], ["绿券", 60]],
+                    vanillaEnchant: "锋利VII、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 3, color: "orange" },
+                      { name: "虚弱附加", level: 5, color: "yellow" },
+                      { name: "格挡反击", level: 2, color: "yellow" },
+                      { name: "中断", level: 2, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+17攻击伤害、+1护甲值、+1盔甲韧性、-2.4攻击速度"
+                  },
+                  {
+                    name: "猎兵战刀C3",
+                    recipe: [["猎兵战刀C2", 1, true], ["C50纳米合金", 15], ["绿券", 60]],
+                    vanillaEnchant: "锋利VIII、破甲II、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 4, color: "orange" },
+                      { name: "虚弱附加", level: 7, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "中断", level: 3, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+18攻击伤害、+1护甲值、+1盔甲韧性、-2.4攻击速度"
+                  }
+                ]
+              },
+              hunterWeaponLongBladeX: {
+                title: "长刃X",
+                items: [
+                  {
+                    name: "猎兵长刃X生存力α",
+                    recipe: [["猎兵战刀C3", 1, true], ["D55环聚合金", 2], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、破甲II、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 7, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "噬血", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+20攻击伤害、+6最大生命值、+6最大伤害吸收值、+6击退抗性、+1实体交互距离、-2.5攻击速度"
+                  },
+                  {
+                    name: "猎兵长刃X生存力β",
+                    recipe: [["猎兵长刃X生存力α", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、破甲II、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "剑子手", level: 5, color: "orange" },
+                      { name: "虚弱附加", level: 7, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "噬血", level: 5, color: "blue" }
+                    ],
+                    equipmentAttr: "+22攻击伤害、+12最大生命值、+8最大伤害吸收值、+8击退抗性、+1实体交互距离、-2.5攻击速度"
+                  }
+                ]
+              },
+              hunterWeaponBlade: {
+                title: "猎兵之刃",
+                items: [
+                  {
+                    name: "猎兵之刃",
+                    recipe: [["猎兵战刀", 1, true], ["C50纳米合金", 6], ["合金提纯液", 3]],
+                    vanillaEnchant: "锋利VIII、横扫之刃VI、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 2, color: "orange" },
+                      { name: "虚弱附加", level: 4, color: "yellow" },
+                      { name: "格挡反击", level: 2, color: "yellow" },
+                      { name: "阔罗", level: 4, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+0.5实体交互距离、+15攻击伤害、+2护甲值、+2盔甲韧性、-2.4攻击速度、+0.86横扫伤害比率"
+                  },
+                  {
+                    name: "猎兵之刃D1",
+                    recipe: [["猎兵之刃", 1, true], ["D55环聚合金", 1], ["高级元素提纯液", 1]],
+                    vanillaEnchant: "锋利IX、横扫之刃VII、耐久VIII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 3, color: "orange" },
+                      { name: "双击", level: 2, color: "yellow" },
+                      { name: "虚弱附加", level: 5, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+0.5实体交互距离、+17攻击伤害、+3护甲值、+3盔甲韧性、+3击退抗性、-2.4攻击速度、+0.88横扫伤害比率"
+                  },
+                  {
+                    name: "猎兵之刃D2",
+                    recipe: [["猎兵之刃D1", 1, true], ["D55环聚合金", 1], ["高级元素提纯液", 1]],
+                    vanillaEnchant: "锋利X、横扫之刃VII、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 4, color: "orange" },
+                      { name: "双击", level: 3, color: "yellow" },
+                      { name: "虚弱附加", level: 6, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "阔罗", level: 5, color: "cyan" },
+                      { name: "杀生", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "+0.5实体交互距离、+19攻击伤害、+3护甲值、+3盔甲韧性、+3击退抗性、-2.4攻击速度、+0.88横扫伤害比率"
+                  },
+                  {
+                    name: "猎兵之刃X",
+                    recipe: [["猎兵之刃D2", 1, true], ["D55环聚合金", 2], ["DM能量结晶", 1]],
+                    vanillaEnchant: "锋利X、节肢杀手VI、横扫之刃VII、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "双击", level: 4, color: "yellow" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "霜冻", level: 4, color: "cyan" },
+                      { name: "阔罗", level: 5, color: "cyan" }
+                    ],
+                    equipmentAttr: "+0.5实体交互距离、+20.5攻击伤害、+4护甲值、+4盔甲韧性、+4击退抗性、-2.3攻击速度、+0.88横扫伤害比率、副手：+20%速度"
+                  },
+                  {
+                    name: "猎兵之刃VX",
+                    recipe: "猎兵之刃X 到 猎兵之刃VX 的兑换路径暂时缺失",
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、横扫之刃IX、耐久VII、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "双击", level: 4, color: "yellow" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "霜冻", level: 5, color: "cyan" },
+                      { name: "阔罗", level: 5, color: "cyan" }
+                    ],
+                    equipmentAttr: "+0.5实体交互距离、+22攻击伤害、+5护甲值、+5盔甲韧性、+5击退抗性、-2.2攻击速度、+0.9横扫伤害比率、副手：+20%速度"
+                  },
+                  {
+                    name: "猎兵之刃VX生存力α",
+                    recipe: [["猎兵之刃VX", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、横扫之刃IX、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "双击", level: 4, color: "yellow" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "霜冻", level: 5, color: "cyan" },
+                      { name: "阔罗", level: 5, color: "cyan" }
+                    ],
+                    equipmentAttr: "+22攻击伤害、+6最大生命值、+6最大伤害吸收值、+6击退抗性、+0.5实体交互距离、-2.2攻击速度、+0.91横扫伤害比率、副手：+20%速度"
+                  },
+                  {
+                    name: "猎兵之刃VX生存力β",
+                    recipe: [["猎兵之刃VX生存力α", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "锋利X、亡灵杀手VI、节肢杀手VI、横扫之刃IX、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "生命协同", level: 5, color: "orange" },
+                      { name: "力量解放", level: 5, color: "orange" },
+                      { name: "双击", level: 4, color: "yellow" },
+                      { name: "虚弱附加", level: 8, color: "yellow" },
+                      { name: "格挡反击", level: 3, color: "yellow" },
+                      { name: "霜冻", level: 5, color: "cyan" },
+                      { name: "阔罗", level: 5, color: "cyan" }
+                    ],
+                    equipmentAttr: "+23攻击伤害、+8最大生命值、+8最大伤害吸收值、+8击退抗性、+0.6实体交互距离、-2.3攻击速度、+0.91横扫伤害比率、副手：+20%速度"
+                  }
+                ]
+              },
+              hunterWeaponCompositeBow: {
+                title: "复合弓",
+                items: [
+                  {
+                    name: "泰拉猎兵复合弓",
+                    recipe: [["C50纳米合金", 12], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "力量VIII、破甲I、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "强毒箭", level: 4, color: "orange" },
+                      { name: "地狱火", level: 4, color: "yellow" },
+                      { name: "暴击", level: 4, color: "yellow" }
+                    ],
+                    equipmentAttr: "无"
+                  },
+                  {
+                    name: "泰拉猎兵复合弓战斗力α",
+                    recipe: [["泰拉猎兵复合弓", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "力量VIII、破甲II、穿透II、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "强毒箭", level: 5, color: "orange" },
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "爆头", level: 5, color: "yellow" },
+                      { name: "地狱火", level: 5, color: "yellow" },
+                      { name: "暴击", level: 4, color: "yellow" }
+                    ],
+                    equipmentAttr: "+4最大生命值、+4最大伤害吸收值、+4%速度"
+                  },
+                  {
+                    name: "泰拉猎兵复合弓战斗力β",
+                    recipe: [["泰拉猎兵复合弓战斗力α", 1, true], ["DM能量结晶", 2], ["绿券", 60]],
+                    vanillaEnchant: "力量IX、破甲II、穿透II、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "强毒箭", level: 5, color: "orange" },
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "爆头", level: 5, color: "yellow" },
+                      { name: "地狱火", level: 5, color: "yellow" },
+                      { name: "暴击", level: 4, color: "yellow" }
+                    ],
+                    equipmentAttr: "+8最大生命值、+8最大伤害吸收值、+6%速度"
+                  }
+                ]
+              },
+              hunterWeaponCompositeCrossbow: {
+                title: "复合弩",
+                items: [
+                  {
+                    name: "泰拉猎兵复合弩",
+                    recipe: [["C50纳米合金", 18], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "力量VIII、穿透IV、快速装填III、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "天弩", level: 4, color: "orange" },
+                      { name: "爆炸弩箭", level: 4, color: "yellow" },
+                      { name: "蓄力一击", level: 4, color: "cyan" },
+                      { name: "强弩", level: 4, color: "green" }
+                    ],
+                    equipmentAttr: "无"
+                  },
+                  {
+                    name: "泰拉猎兵战术弩",
+                    recipe: [["泰拉猎兵复合弩", 1, true], ["D55环聚合金", 4], ["DM能量结晶", 1]],
+                    vanillaEnchant: "力量VIII、破甲IV、穿透IV、快速装填III、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "警炮", level: 3, color: "red" },
+                      { name: "电浆箭矢", level: 3, color: "orange" },
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "天弩", level: 5, color: "orange" },
+                      { name: "爆炸弩箭", level: 5, color: "yellow" },
+                      { name: "强弩", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+4最大生命值、+4最大伤害吸收值"
+                  },
+                  {
+                    name: "泰拉猎兵战术弩X",
+                    recipe: "泰拉猎兵战术弩 到 泰拉猎兵战术弩X 的合成路径暂时缺失",
+                    vanillaEnchant: "力量X、破甲IV、穿透IV、快速装填III、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "警炮", level: 3, color: "red" },
+                      { name: "电浆箭矢", level: 3, color: "orange" },
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "天弩", level: 5, color: "orange" },
+                      { name: "爆炸弩箭", level: 5, color: "yellow" },
+                      { name: "强弩", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+4最大生命值、+4最大伤害吸收值"
+                  },
+                  {
+                    name: "泰拉猎兵战术弩X生存力α",
+                    recipe: [["泰拉猎兵战术弩X", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "力量X、破甲IV、穿透IV、快速装填III、耐久X、经验修补",
+                    pluginEnchant: [
+                      { name: "警炮", level: 3, color: "red" },
+                      { name: "电浆箭矢", level: 3, color: "orange" },
+                      { name: "猎兵", level: 4, color: "orange" },
+                      { name: "天弩", level: 5, color: "orange" },
+                      { name: "爆炸弩箭", level: 5, color: "yellow" },
+                      { name: "强弩", level: 5, color: "green" }
+                    ],
+                    equipmentAttr: "+8最大生命值、+6最大伤害吸收值、+6击退抗性、-40%着火时间、+40%潜行速度"
+                  }
+                ]
+              }
+            }
+          },
+          tool: {
+            title: "工具",
+            sets: {
+              hunterShield: {
+                title: "猎兵盾",
+                items: [
+                  {
+                    name: "猎兵卫盾",
+                    recipe: [["D55环聚合金", 2], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "耐久VI、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+12护甲值、+12最大生命值、+2最大伤害吸收值、-20%着火时间、+10%攻击伤害、-10%速度"
+                  },
+                  {
+                    name: "猎兵卫盾X生命值α",
+                    recipe: [["猎兵卫盾", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利II、保护X、耐久X、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+15.5攻击伤害、+2.5击退、-2.5攻击速度",
+                    handheldAttr: "+10%攻击伤害、+5最大伤害吸收值、+15护甲值、-25%着火时间、+25%击退抗性、+25最大生命值、-10%速度"
+                  },
+                  {
+                    name: "猎兵卫盾X生命值β",
+                    recipe: [["猎兵卫盾X生命值α", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利II、保护X、耐久X、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+15.5攻击伤害、+2.5击退、-2.5攻击速度",
+                    handheldAttr: "+10%攻击伤害、+5最大伤害吸收值、+15护甲值、-50%着火时间、+35%击退抗性、+35最大生命值、-10%速度"
+                  },
+                  {
+                    name: "猎兵卫盾X战斗力α",
+                    recipe: [["猎兵卫盾", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利V、保护X、耐久X、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+16.5攻击伤害、+4击退、-2.5攻击速度",
+                    handheldAttr: "+5最大伤害吸收值、+15护甲值、+15%攻击伤害、-25%着火时间、+25%击退抗性、+10最大生命值、-10%速度"
+                  },
+                  {
+                    name: "猎兵卫盾X战斗力β",
+                    recipe: [["猎兵卫盾X战斗力α", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    vanillaEnchant: "锋利V、保护X、耐久X、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+17.5攻击伤害、+4击退、-2.5攻击速度",
+                    handheldAttr: "+18%攻击伤害、+5最大伤害吸收值、+15护甲值、-50%着火时间、+50%击退抗性、+15最大生命值、-10%速度"
+                  }
+                ]
+              },
+              hunterUtilityBags: {
+                title: "背包等",
+                items: [
+                  {
+                    name: "泰拉生化防护头罩",
+                    recipe: [["C50纳米合金", 3], ["DM能量结晶", 1], ["绿券", 60]],
+                    hideVanillaEnchant: true,
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+3护甲值、+3盔甲韧性、+30额外氧气"
+                  },
+                  {
+                    name: "泰拉生化防护头罩适应性λ",
+                    recipe: [["泰拉生化防护头罩", 1, true], ["DM能量结晶", 1], ["绿券", 60]],
+                    hideVanillaEnchant: true,
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+6护甲值、+6盔甲韧性、+60额外氧气、+30%水中移动效率、+30%水下挖掘速度"
+                  },
+                  {
+                    name: "猎兵战术背包",
+                    recipe: [["C50纳米合金", 3], ["DM能量结晶", 1], ["绿券", 60]],
+                    hideVanillaEnchant: true,
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+3护甲值、+3盔甲韧性、+3击退抗性、+3最大伤害吸收值、+8最大生命值、-20%着火时间"
+                  },
+                  {
+                    name: "泰拉政府公文背包",
+                    recipe: [["绿票", 60], ["鳄鱼皮", 10], ["优质兽皮", 20]],
+                    hideVanillaEnchant: true,
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+5护甲值、+10%最大生命值、+5幸运值、+0.1最大伤害吸收值、+10%击退抗性"
+                  },
+                  {
+                    name: "阿斯兰侦查伪装服",
+                    recipe: [["绿票", 60], ["D55环聚合金", 1], ["DM能量结晶", 1], ["身份识别卡(未开放)", 1, true]],
+                    hideVanillaEnchant: true,
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    equipmentAttr: "+10最大生命值、+10击退抗性、+10幸运值、+10%速度、+10%攻击速度、+10%尺寸"
+                  }
+                ]
+              },
+              hunterDailyTools: {
+                title: "日常工具",
+                items: [
+                  {
+                    name: "碳纤维聚合物鱼竿",
+                    recipe: [["聚合物凝酮块", 5], ["合金提纯液", 2], ["绿券", 20]],
+                    vanillaEnchant: "饵钓VII、耐久X、经验修补",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    hideEquipmentAttr: true,
+                    functionText: "介绍：由猎兵学院的先进材料制作，这种咕咕大陆从未出现过的材料轻便又防火，可以迅捷地捕捉每一条被吸引而来的鱼。<br>功能：极大减少上钩时间；可以在岩浆中钓鱼。"
+                  },
+                  {
+                    name: "聚合物工程镐",
+                    recipe: [["聚合物凝酮块", 6], ["合金提纯液", 2], ["绿券", 40]],
+                    vanillaEnchant: "耐久VI",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    hideEquipmentAttr: true
+                  },
+                  {
+                    name: "聚合物工程斧",
+                    recipe: [["聚合物凝酮块", 6], ["合金提纯液", 2], ["绿券", 40]],
+                    vanillaEnchant: "耐久VI",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    hideEquipmentAttr: true
+                  },
+                  {
+                    name: "聚合物工程铲",
+                    recipe: [["聚合物凝酮块", 6], ["合金提纯液", 2], ["绿券", 40]],
+                    vanillaEnchant: "耐久VI",
+                    pluginEnchant: "无",
+                    hidePluginEnchant: true,
+                    hideEquipmentAttr: true
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      aslan: {
+        title: "阿斯兰",
+        categories: {}
+      },
+      migaro: {
+        title: "米伽罗",
+        categories: {}
+      },
+      daqin: {
+        title: "大秦",
+        categories: {}
+      }
+    };
+
+    const mainTabsEl = document.getElementById("mainTabs");
+    const materialModuleEl = document.getElementById("materialModule");
+    const equipmentModuleEl = document.getElementById("equipmentModule");
+    const equipmentFactionEl = document.getElementById("equipmentFaction");
+    const equipmentCategoryEl = document.getElementById("equipmentCategory");
+    const equipmentSetEl = document.getElementById("equipmentSet");
+    const equipmentSummaryEl = document.getElementById("equipmentSummary");
+    const equipmentOutputEl = document.getElementById("equipmentOutput");
+
+    function renderEquipmentFactionOptions() {
+      equipmentFactionEl.innerHTML = Object.entries(EQUIPMENT_DATA).map(([key, data]) => {
+        return `<option value="${key}">${data.title}</option>`;
+      }).join("");
+    }
+
+    function renderEquipmentCategoryOptions() {
+      const faction = EQUIPMENT_DATA[equipmentFactionEl.value];
+      const categories = faction?.categories || {};
+      const entries = Object.entries(categories);
+
+      if (!entries.length) {
+        equipmentCategoryEl.innerHTML = `<option value="">暂无装备分类</option>`;
+        equipmentCategoryEl.disabled = true;
+        equipmentSetEl.innerHTML = `<option value="">暂无套装</option>`;
+        equipmentSetEl.disabled = true;
+        return;
+      }
+
+      equipmentCategoryEl.disabled = false;
+      equipmentCategoryEl.innerHTML = entries.map(([key, data]) => {
+        return `<option value="${key}">${data.title}</option>`;
+      }).join("");
+
+      renderEquipmentSetOptions();
+    }
+
+    function renderEquipmentSetOptions() {
+      const faction = EQUIPMENT_DATA[equipmentFactionEl.value];
+      const category = faction?.categories?.[equipmentCategoryEl.value];
+      const sets = category?.sets || {};
+      const entries = Object.entries(sets);
+
+      if (!entries.length) {
+        equipmentSetEl.innerHTML = `<option value="">暂无套装</option>`;
+        equipmentSetEl.disabled = true;
+        return;
+      }
+
+      equipmentSetEl.disabled = false;
+      equipmentSetEl.innerHTML = entries.map(([key, data]) => {
+        return `<option value="${key}">${data.title}</option>`;
+      }).join("");
+    }
+
+    function recipeText(recipe) {
+      if (typeof recipe === "string") return recipe;
+      return recipe.map(([name, qty, hideQty]) => {
+        if (hideQty) return name;
+        return `${fmt(qty)}个${name}`;
+      }).join(" + ");
+    }
+
+    function toRoman(num) {
+      const romanMap = [
+        [10, "X"], [9, "IX"], [8, "VIII"], [7, "VII"], [6, "VI"],
+        [5, "V"], [4, "IV"], [3, "III"], [2, "II"], [1, "I"]
+      ];
+      let value = Number(num);
+      let result = "";
+      romanMap.forEach(([n, r]) => {
+        while (value >= n) {
+          result += r;
+          value -= n;
+        }
+      });
+      return result || String(num);
+    }
+
+    function pluginEnchantHtml(pluginEnchant) {
+      if (!pluginEnchant || pluginEnchant === "无") return "无";
+
+      if (typeof pluginEnchant === "string") {
+        return pluginEnchant;
+      }
+
+      return pluginEnchant.map(item => {
+        const cls = `ench-${item.color}`;
+        return `<span class="${cls}">${item.name}${toRoman(item.level)}</span>`;
+      }).join("、");
+    }
+
+    function tierHtml(item) {
+      if (!item.tier) return "";
+      const cls = item.tierColor ? `tier-${item.tierColor}` : "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">等阶</div>
+                    <div class="property-value"><span class="${cls}">${item.tier}</span></div>
+                  </div>`;
+    }
+
+    function vanillaHtml(text) {
+      if (!text) return "";
+      return `<span class="vanilla-text">${text}</span>`;
+    }
+
+    function vanillaEnchantRow(item) {
+      if (item.hideVanillaEnchant || !item.vanillaEnchant) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">原版附魔</div>
+                    <div class="property-value">${vanillaHtml(item.vanillaEnchant)}</div>
+                  </div>`;
+    }
+
+    function functionHtml(item) {
+      if (!item.functionText) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">功能</div>
+                    <div class="property-value">${item.functionText}</div>
+                  </div>`;
+    }
+
+    function equipmentAttrRow(item) {
+      if (item.hideEquipmentAttr || !item.equipmentAttr) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">装备属性</div>
+                    <div class="property-value">${equipmentAttrHtml(item.equipmentAttr)}</div>
+                  </div>`;
+    }
+
+    function descriptionHtml(item) {
+      return "";
+    }
+
+    function equipmentAttrHtml(text) {
+      if (!text) return "";
+      return String(text).split("、").map(part => {
+        const trimmed = part.trim();
+        const cls = trimmed.includes("着火时间") ? "attr-blue" : (trimmed.startsWith("-") ? "attr-red" : "attr-blue");
+        return `<span class="${cls}">${part}</span>`;
+      }).join("、");
+    }
+
+    function pluginEnchantRow(item) {
+      if (item.hidePluginEnchant) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">插件附魔</div>
+                    <div class="property-value">${pluginEnchantHtml(item.pluginEnchant)}</div>
+                  </div>`;
+    }
+
+    function handheldAttrHtml(item) {
+      if (!item.handheldAttr) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">手持时</div>
+                    <div class="property-value">${equipmentAttrHtml(item.handheldAttr)}</div>
+                  </div>`;
+    }
+
+    function setAttrHtml(item) {
+      if (equipmentCategoryEl.value === "weapon") return "";
+      if (!item.setAttr) return "";
+      return `
+                  <div class="property-row">
+                    <div class="property-name">套装属性</div>
+                    <div class="property-value">${item.setAttr}</div>
+                  </div>`;
+    }
+
+    function renderEquipmentOutput() {
+      const faction = EQUIPMENT_DATA[equipmentFactionEl.value];
+      const category = faction?.categories?.[equipmentCategoryEl.value];
+      const set = category?.sets?.[equipmentSetEl.value];
+
+      if (!faction) {
+        equipmentSummaryEl.innerHTML = "请选择势力。";
+        equipmentOutputEl.innerHTML = `<div class="empty">暂无数据。</div>`;
+        return;
+      }
+
+      if (!category) {
+        equipmentSummaryEl.innerHTML = `当前势力：<strong>${faction.title}</strong><br>该势力暂未录入装备分类。`;
+        equipmentOutputEl.innerHTML = `<div class="empty">该势力暂未录入装备数据。</div>`;
+        return;
+      }
+
+      if (!set) {
+        equipmentSummaryEl.innerHTML = `
+          当前势力：<strong>${faction.title}</strong><br>
+          当前分类：<strong>${category.title}</strong><br>
+          当前分类暂未录入套装。
+        `;
+        equipmentOutputEl.innerHTML = `<div class="empty">${faction.title} · ${category.title} 暂未录入套装数据。</div>`;
+        return;
+      }
+
+      equipmentSummaryEl.innerHTML = `
+        当前势力：<strong>${faction.title}</strong><br>
+        当前分类：<strong>${category.title}</strong><br>
+        当前套装：<strong>${set.title}</strong><br>
+        已录入装备：<strong>${set.items.length}</strong> 件
+      `;
+
+      if (!set.items.length) {
+        equipmentOutputEl.innerHTML = `<div class="empty">${faction.title} · ${category.title} · ${set.title} 暂未录入装备数据。</div>`;
+        return;
+      }
+
+      equipmentOutputEl.innerHTML = `
+        <div class="equipment-list">
+          ${set.items.map(item => `
+            <article class="equipment-card">
+              <h3>${item.name}</h3>
+              <div class="equipment-card-body">
+                <div class="equipment-recipe">
+                  <strong>合成材料：</strong>${recipeText(item.recipe)}
+                </div>
+                <div class="property-grid">
+                  ${vanillaEnchantRow(item)}
+                  ${pluginEnchantRow(item)}
+                  ${descriptionHtml(item)}
+                  ${functionHtml(item)}
+                  ${equipmentAttrRow(item)}
+                  ${handheldAttrHtml(item)}
+                  ${setAttrHtml(item)}
+                  ${tierHtml(item)}
+                </div>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function setupEquipmentModule() {
+      renderEquipmentFactionOptions();
+      renderEquipmentCategoryOptions();
+      renderEquipmentSetOptions();
+      renderEquipmentOutput();
+    }
+
+    mainTabsEl.addEventListener("click", event => {
+      const btn = event.target.closest("[data-main-module]");
+      if (!btn) return;
+
+      const module = btn.dataset.mainModule;
+
+      document.querySelectorAll("[data-main-module]").forEach(item => {
+        item.classList.toggle("active", item === btn);
+      });
+
+      materialModuleEl.classList.toggle("active", module === "material");
+      equipmentModuleEl.classList.toggle("active", module === "equipment");
+
+      if (module === "equipment") {
+        setupEquipmentModule();
+      }
+    });
+
+    equipmentFactionEl.addEventListener("change", () => {
+      renderEquipmentCategoryOptions();
+      renderEquipmentSetOptions();
+      renderEquipmentOutput();
+    });
+
+    equipmentCategoryEl.addEventListener("change", () => {
+      renderEquipmentSetOptions();
+      renderEquipmentOutput();
+    });
+
+    equipmentSetEl.addEventListener("change", renderEquipmentOutput);
+
+    setupEquipmentModule();
+
+
+    setupActiveTable();
+  </script>
+</body>
+</html>
